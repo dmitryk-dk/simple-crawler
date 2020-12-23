@@ -1,14 +1,11 @@
 package fetcher
 
 import (
-	"bytes"
 	"crypto/tls"
 	"io/ioutil"
 	"net/http"
 	"net/http/cookiejar"
 	"time"
-
-	"github.com/PuerkitoBio/goquery"
 )
 
 type Fetcher interface {
@@ -44,25 +41,10 @@ func (f *Client) Fetch(url string) ([]byte, error) {
 	if err != nil {
 		return nil, err
 	}
-	defer func(){ _ = resp.Body.Close() }()
+	defer func() { _ = resp.Body.Close() }()
 	response, err := ioutil.ReadAll(resp.Body)
 	if err != nil {
 		return nil, err
 	}
 	return response, nil
-}
-
-func ExtractLinks(htmlDoc []byte) []string {
-	var hrefs []string
-	doc, _ := goquery.NewDocumentFromReader(bytes.NewBuffer(htmlDoc))
-	if doc != nil {
-		doc.Find("a").Each(func(i int, s *goquery.Selection) {
-			if s != nil {
-				href, _ := s.Attr("href")
-				hrefs = append(hrefs, href)
-			}
-		})
-		return hrefs
-	}
-	return hrefs
 }

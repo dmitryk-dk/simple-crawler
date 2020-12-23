@@ -1,12 +1,16 @@
-package url_parser
+package url_filter
 
 import (
+	"bytes"
 	"net/url"
 	"strings"
+
+	"github.com/PuerkitoBio/goquery"
 )
 
-type LinkFilter interface {
-	CollectLinks(hrefs []string) *Filter
+type URLFilter interface {
+	ExtractLinks([]byte) []string
+	CollectLinks([]string) *Filter
 	FilterLinks() []string
 }
 
@@ -24,6 +28,21 @@ func New(baseURL string) *Filter {
 		baseURL: link,
 		links:   make([]*url.URL, 0),
 	}
+}
+
+func (f *Filter) ExtractLinks(htmlDoc []byte) []string {
+	var hrefs []string
+	doc, _ := goquery.NewDocumentFromReader(bytes.NewBuffer(htmlDoc))
+	if doc != nil {
+		doc.Find("a").Each(func(i int, s *goquery.Selection) {
+			if s != nil {
+				href, _ := s.Attr("href")
+				hrefs = append(hrefs, href)
+			}
+		})
+		return hrefs
+	}
+	return hrefs
 }
 
 func (f *Filter) CollectLinks(hrefs []string) *Filter {
