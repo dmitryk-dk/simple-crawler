@@ -5,11 +5,13 @@ import (
 
 	"github.com/dmitryk-dk/simlpe-crawler/fetcher"
 	"github.com/dmitryk-dk/simlpe-crawler/url_cache"
+	"github.com/dmitryk-dk/simlpe-crawler/url_parser"
 )
 
 type SimpleCrawler struct {
 	fetcher           fetcher.Fetcher
-	urlProcessor      *url_cache.URLProcessor
+	urlCache          *url_cache.URLCache
+	urlParser         url_parser.LinkFilter
 	doneC             chan struct{}
 	linksC            chan []string
 	visitedLinksC     chan []string
@@ -20,7 +22,8 @@ type SimpleCrawler struct {
 func New(baseURL string, numberOfViewLinks int) *SimpleCrawler {
 	c := &SimpleCrawler{
 		fetcher:           fetcher.New(),
-		urlProcessor:      url_cache.New(),
+		urlCache:          url_cache.New(),
+		urlParser:         url_parser.New(baseURL),
 		linksC:            make(chan []string),
 		doneC:             make(chan struct{}),
 		visitedLinksC:     make(chan []string),
@@ -40,7 +43,7 @@ func (c *SimpleCrawler) Process() {
 				go c.getLinks(link)
 			}
 		case <-c.doneC:
-			c.visitedLinksC <- c.urlProcessor.GetVisitedLinks()
+			c.visitedLinksC <- c.urlCache.GetVisitedLinks()
 			return
 		}
 	}
@@ -56,7 +59,7 @@ func (c *SimpleCrawler) start() {
 
 func (c *SimpleCrawler) checkLimit() {
 	for {
-		if c.urlProcessor.GetLenVisitedLinks() == c.numberOfViewLinks {
+		if c.urlCache.GetLenVisitedLinks() == c.numberOfViewLinks {
 			close(c.doneC)
 			return
 		}
@@ -68,6 +71,6 @@ func (c *SimpleCrawler) getLinks(link string) {
 	if err != nil {
 		log.Printf("err fetch url %s : %s", link, err)
 	} else {
-		c.linksC <- c.urlProcessor.FilterLinks(c.baseURL, fetcher.ExtractLinks(res))
+		c.linksC <- c.urlCache.FilterLinks(c.urlParser.CollectLinks(fetcher.ExtractLinks(res)).FilterLinks())
 	}
 }
