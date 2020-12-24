@@ -16,7 +16,7 @@ type Client struct {
 	client *http.Client
 }
 
-func New() *Client {
+func New(timeout time.Duration) *Client {
 	cookieJar, _ := cookiejar.New(nil)
 	return &Client{
 		client: &http.Client{
@@ -24,10 +24,10 @@ func New() *Client {
 				DisableKeepAlives:     true,
 				TLSClientConfig:       &tls.Config{InsecureSkipVerify: true},
 				TLSNextProto:          make(map[string]func(authority string, c *tls.Conn) http.RoundTripper), // Disable HTTP/2
-				ResponseHeaderTimeout: time.Second * 10,
+				ResponseHeaderTimeout: timeout,
 			},
 			Jar:     cookieJar,
-			Timeout: time.Second * 10,
+			Timeout: timeout,
 		},
 	}
 }

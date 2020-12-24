@@ -2,6 +2,7 @@ package crawler
 
 import (
 	"log"
+	"time"
 
 	"github.com/dmitryk-dk/simlpe-crawler/fetcher"
 	"github.com/dmitryk-dk/simlpe-crawler/url_cache"
@@ -15,18 +16,20 @@ type SimpleCrawler struct {
 	doneC             chan struct{}
 	linksC            chan []string
 	visitedLinksC     chan []string
+	reqLimit          chan string
 	baseURL           string
 	numberOfViewLinks int
 }
 
-func New(baseURL string, numberOfViewLinks int) *SimpleCrawler {
+func New(baseURL string, numberOfViewLinks, reqLimit int, timeout time.Duration) *SimpleCrawler {
 	c := &SimpleCrawler{
-		fetcher:           fetcher.New(),
+		fetcher:           fetcher.New(timeout),
 		urlCache:          url_cache.New(),
 		urlParser:         url_filter.New(baseURL),
 		linksC:            make(chan []string),
 		doneC:             make(chan struct{}),
 		visitedLinksC:     make(chan []string),
+		reqLimit:          make(chan string, reqLimit),
 		baseURL:           baseURL,
 		numberOfViewLinks: numberOfViewLinks,
 	}
@@ -40,6 +43,7 @@ func (c *SimpleCrawler) Process() {
 		select {
 		case links := <-c.linksC:
 			for _, link := range links {
+				c.reqLimit <- link
 				go c.getLinks(link)
 			}
 		case <-c.doneC:
@@ -67,6 +71,7 @@ func (c *SimpleCrawler) checkLimit() {
 }
 
 func (c *SimpleCrawler) getLinks(link string) {
+	<-c.reqLimit
 	res, err := c.fetcher.Fetch(link)
 	if err != nil {
 		log.Printf("err fetch url %s : %s", link, err)
