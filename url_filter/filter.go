@@ -8,12 +8,6 @@ import (
 	"github.com/PuerkitoBio/goquery"
 )
 
-type URLFilter interface {
-	ExtractLinks([]byte) []string
-	CollectLinks([]string) *Filter
-	FilterLinks() []string
-}
-
 type Filter struct {
 	baseURL *url.URL
 	links   []*url.URL
@@ -45,7 +39,7 @@ func (f *Filter) ExtractLinks(htmlDoc []byte) []string {
 	return hrefs
 }
 
-func (f *Filter) CollectLinks(hrefs []string) *Filter {
+func (f *Filter) CollectLinks(hrefs []string) {
 	for _, href := range hrefs {
 		if href == "" {
 			continue
@@ -56,7 +50,6 @@ func (f *Filter) CollectLinks(hrefs []string) *Filter {
 		}
 		f.links = append(f.links, link)
 	}
-	return f
 }
 
 func (f *Filter) FilterLinks() []string {

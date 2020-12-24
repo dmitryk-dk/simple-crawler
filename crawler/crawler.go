@@ -9,10 +9,26 @@ import (
 	"github.com/dmitryk-dk/simlpe-crawler/url_filter"
 )
 
+type Fetcher interface {
+	Fetch(url string) ([]byte, error)
+}
+
+type URLFilter interface {
+	ExtractLinks([]byte) []string
+	CollectLinks([]string)
+	FilterLinks() []string
+}
+
+type URLCacher interface {
+	GetLenVisitedLinks() int
+	GetVisitedLinks() []string
+	FilterLinks([]string) []string
+}
+
 type SimpleCrawler struct {
-	fetcher           fetcher.Fetcher
-	urlCache          *url_cache.URLCache
-	urlParser         url_filter.URLFilter
+	fetcher           Fetcher
+	urlParser         URLFilter
+	urlCache          URLCacher
 	doneC             chan struct{}
 	linksC            chan []string
 	visitedLinksC     chan []string
@@ -76,6 +92,7 @@ func (c *SimpleCrawler) getLinks(link string) {
 	if err != nil {
 		log.Printf("err fetch url %s : %s", link, err)
 	} else {
-		c.linksC <- c.urlCache.FilterLinks(c.urlParser.CollectLinks(c.urlParser.ExtractLinks(res)).FilterLinks())
+		c.urlParser.CollectLinks(c.urlParser.ExtractLinks(res))
+		c.linksC <- c.urlCache.FilterLinks(c.urlParser.FilterLinks())
 	}
 }

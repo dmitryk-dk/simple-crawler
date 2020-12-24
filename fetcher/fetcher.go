@@ -8,10 +8,6 @@ import (
 	"time"
 )
 
-type Fetcher interface {
-	Fetch(url string) ([]byte, error)
-}
-
 type Client struct {
 	client *http.Client
 }
