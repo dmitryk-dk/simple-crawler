@@ -74,11 +74,11 @@ func (f *Filter) FilterLinks() []string {
 }
 
 func (f *Filter) hasSubdomains(link *url.URL) bool {
-	return !strings.HasSuffix(link.Host, "."+f.baseURL.String())
+	return !strings.HasSuffix(link.Host, "."+f.baseURL.String()) || strings.HasSuffix(link.Host, "www."+f.baseURL.String())
 }
 
 func (f *Filter) hasSameDomain(link *url.URL) bool {
-	return link.Host == f.baseURL.Host
+	return link.Host == f.baseURL.Host || link.Host == "www."+f.baseURL.Host
 }
 
 func (f *Filter) hasSameSchema(link *url.URL) bool {

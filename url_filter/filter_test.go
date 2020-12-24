@@ -102,164 +102,86 @@ func TestFilter_ExtractLinks(t *testing.T) {
 	}
 }
 
-// TODO continue add tests
-// func TestFilter_FilterLinks(t *testing.T) {
-// 	type fields struct {
-// 		baseURL *url.URL
-// 		links   []*url.URL
-// 	}
-// 	tests := []struct {
-// 		name   string
-// 		fields fields
-// 		want   []string
-// 	}{
-// 		// TODO: Add test cases.
-// 	}
-// 	for _, tt := range tests {
-// 		t.Run(tt.name, func(t *testing.T) {
-// 			f := &Filter{
-// 				baseURL: tt.fields.baseURL,
-// 				links:   tt.fields.links,
-// 			}
-// 			if got := f.FilterLinks(); !reflect.DeepEqual(got, tt.want) {
-// 				t.Errorf("FilterLinks() = %v, want %v", got, tt.want)
-// 			}
-// 		})
-// 	}
-// }
-//
-// func TestFilter_hasSameDomain(t *testing.T) {
-// 	type fields struct {
-// 		baseURL *url.URL
-// 		links   []*url.URL
-// 	}
-// 	type args struct {
-// 		link *url.URL
-// 	}
-// 	tests := []struct {
-// 		name   string
-// 		fields fields
-// 		args   args
-// 		want   bool
-// 	}{
-// 		// TODO: Add test cases.
-// 	}
-// 	for _, tt := range tests {
-// 		t.Run(tt.name, func(t *testing.T) {
-// 			f := &Filter{
-// 				baseURL: tt.fields.baseURL,
-// 				links:   tt.fields.links,
-// 			}
-// 			if got := f.hasSameDomain(tt.args.link); got != tt.want {
-// 				t.Errorf("hasSameDomain() = %v, want %v", got, tt.want)
-// 			}
-// 		})
-// 	}
-// }
-//
-// func TestFilter_hasSameSchema(t *testing.T) {
-// 	type fields struct {
-// 		baseURL *url.URL
-// 		links   []*url.URL
-// 	}
-// 	type args struct {
-// 		link *url.URL
-// 	}
-// 	tests := []struct {
-// 		name   string
-// 		fields fields
-// 		args   args
-// 		want   bool
-// 	}{
-// 		// TODO: Add test cases.
-// 	}
-// 	for _, tt := range tests {
-// 		t.Run(tt.name, func(t *testing.T) {
-// 			f := &Filter{
-// 				baseURL: tt.fields.baseURL,
-// 				links:   tt.fields.links,
-// 			}
-// 			if got := f.hasSameSchema(tt.args.link); got != tt.want {
-// 				t.Errorf("hasSameSchema() = %v, want %v", got, tt.want)
-// 			}
-// 		})
-// 	}
-// }
-//
-// func TestFilter_hasSubdomains(t *testing.T) {
-// 	type fields struct {
-// 		baseURL *url.URL
-// 		links   []*url.URL
-// 	}
-// 	type args struct {
-// 		link *url.URL
-// 	}
-// 	tests := []struct {
-// 		name   string
-// 		fields fields
-// 		args   args
-// 		want   bool
-// 	}{
-// 		// TODO: Add test cases.
-// 	}
-// 	for _, tt := range tests {
-// 		t.Run(tt.name, func(t *testing.T) {
-// 			f := &Filter{
-// 				baseURL: tt.fields.baseURL,
-// 				links:   tt.fields.links,
-// 			}
-// 			if got := f.hasSubdomains(tt.args.link); got != tt.want {
-// 				t.Errorf("hasSubdomains() = %v, want %v", got, tt.want)
-// 			}
-// 		})
-// 	}
-// }
-//
-// func TestFilter_notEmptyLink(t *testing.T) {
-// 	type fields struct {
-// 		baseURL *url.URL
-// 		links   []*url.URL
-// 	}
-// 	type args struct {
-// 		link *url.URL
-// 	}
-// 	tests := []struct {
-// 		name   string
-// 		fields fields
-// 		args   args
-// 		want   bool
-// 	}{
-// 		// TODO: Add test cases.
-// 	}
-// 	for _, tt := range tests {
-// 		t.Run(tt.name, func(t *testing.T) {
-// 			f := &Filter{
-// 				baseURL: tt.fields.baseURL,
-// 				links:   tt.fields.links,
-// 			}
-// 			if got := f.notEmptyLink(tt.args.link); got != tt.want {
-// 				t.Errorf("notEmptyLink() = %v, want %v", got, tt.want)
-// 			}
-// 		})
-// 	}
-// }
-//
-// func TestNew(t *testing.T) {
-// 	type args struct {
-// 		baseURL string
-// 	}
-// 	tests := []struct {
-// 		name string
-// 		args args
-// 		want *Filter
-// 	}{
-// 		// TODO: Add test cases.
-// 	}
-// 	for _, tt := range tests {
-// 		t.Run(tt.name, func(t *testing.T) {
-// 			if got := New(tt.args.baseURL); !reflect.DeepEqual(got, tt.want) {
-// 				t.Errorf("New() = %v, want %v", got, tt.want)
-// 			}
-// 		})
-// 	}
-// }
+func TestFilter_FilterLinks(t *testing.T) {
+	tests := []struct {
+		name   string
+		filter *Filter
+		hrefs  []string
+		want   []string
+	}{
+		{
+			name:   "empty links",
+			filter: New("https://google.com"),
+			hrefs:  []string{},
+			want:   []string(nil),
+		},
+		{
+			name:   "every link not in same domain",
+			filter: New("https://google.com"),
+			hrefs:  []string{"http://foo.com/blah_blah", "http://foo.com/blah_blah_(wikipedia)"},
+			want:   []string(nil),
+		},
+		{
+			name:   "link with wrong schema",
+			filter: New("https://google.com"),
+			hrefs:  []string{"http://10.1.1.255", "http://google.com", "https://www.google.com"},
+			want:   []string{"https://www.google.com"},
+		},
+		{
+			name:   "has relative links",
+			filter: New("https://google.com"),
+			hrefs:  []string{"/some/relative", "http://google.com", "https://google.com"},
+			want:   []string{"https://google.com"},
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			tt.filter.CollectLinks(tt.hrefs)
+			if got := tt.filter.FilterLinks(); !reflect.DeepEqual(got, tt.want) {
+				t.Errorf("FilterLinks() = %#v, want %#v", got, tt.want)
+			}
+		})
+	}
+}
+
+func TestFilter_hasSameDomain(t *testing.T) {
+	tests := []struct {
+		name   string
+		filter *Filter
+		link   string
+		want   bool
+	}{
+		{
+			name:   "empty link",
+			filter: New("https://google.com"),
+			link:   "",
+			want:   false,
+		},
+		{
+			name:   "with not same schema",
+			filter: New("https://google.com"),
+			link:   "http://google.com",
+			want:   true,
+		},
+		{
+			name:   "not same domain",
+			filter: New("https://google.com"),
+			link:   "http://googles.com",
+			want:   false,
+		},
+		{
+			name:   "hase subdomain",
+			filter: New("https://google.com"),
+			link:   "https://tools.googles.com",
+			want:   true,
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			link, _ := url.Parse(tt.link)
+			if got := tt.filter.hasSameDomain(link); got != tt.want {
+				t.Errorf("hasSameDomain() = %v, want %v", got, tt.want)
+			}
+		})
+	}
+}
