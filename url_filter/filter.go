@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"net/url"
 	"strings"
+	"sync"
 
 	"github.com/PuerkitoBio/goquery"
 )
@@ -11,6 +12,7 @@ import (
 type Filter struct {
 	baseURL *url.URL
 	links   []*url.URL
+	mx      sync.RWMutex
 }
 
 func New(baseURL string) *Filter {
@@ -40,6 +42,8 @@ func (f *Filter) ExtractLinks(htmlDoc []byte) []string {
 }
 
 func (f *Filter) CollectLinks(hrefs []string) {
+	f.mx.Lock()
+	defer f.mx.Unlock()
 	for _, href := range hrefs {
 		if href == "" {
 			continue
@@ -53,6 +57,8 @@ func (f *Filter) CollectLinks(hrefs []string) {
 }
 
 func (f *Filter) FilterLinks() []string {
+	f.mx.Lock()
+	defer f.mx.Unlock()
 	var internalLinks []string
 	for _, link := range f.links {
 		if link.IsAbs() &&
