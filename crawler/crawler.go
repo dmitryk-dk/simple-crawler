@@ -2,11 +2,6 @@ package crawler
 
 import (
 	"log"
-	"time"
-
-	"github.com/dmitryk-dk/simlpe-crawler/fetcher"
-	"github.com/dmitryk-dk/simlpe-crawler/url_cache"
-	"github.com/dmitryk-dk/simlpe-crawler/url_filter"
 )
 
 type Fetcher interface {
@@ -17,6 +12,7 @@ type URLFilter interface {
 	ExtractLinks([]byte) []string
 	CollectLinks([]string)
 	FilterLinks() []string
+	GetBaseURL() string
 }
 
 type URLCacher interface {
@@ -27,26 +23,24 @@ type URLCacher interface {
 
 type SimpleCrawler struct {
 	fetcher           Fetcher
-	urlParser         URLFilter
+	urlFilter         URLFilter
 	urlCache          URLCacher
 	doneC             chan struct{}
 	linksC            chan []string
 	visitedLinksC     chan []string
 	reqLimit          chan string
-	baseURL           string
 	numberOfViewLinks int
 }
 
-func New(baseURL string, numberOfViewLinks, reqLimit int, timeout time.Duration) *SimpleCrawler {
+func New(fetcher Fetcher, urlFilter URLFilter, urlCacher URLCacher, numberOfViewLinks, reqLimit int) *SimpleCrawler {
 	c := &SimpleCrawler{
-		fetcher:           fetcher.New(timeout),
-		urlCache:          url_cache.New(),
-		urlParser:         url_filter.New(baseURL),
+		fetcher:           fetcher,
+		urlFilter:         urlFilter,
+		urlCache:          urlCacher,
 		linksC:            make(chan []string),
 		doneC:             make(chan struct{}),
 		visitedLinksC:     make(chan []string),
 		reqLimit:          make(chan string, reqLimit),
-		baseURL:           baseURL,
 		numberOfViewLinks: numberOfViewLinks,
 	}
 	go c.start()
@@ -74,7 +68,7 @@ func (c *SimpleCrawler) VisitedLinks() chan []string {
 }
 
 func (c *SimpleCrawler) start() {
-	c.linksC <- []string{c.baseURL}
+	c.linksC <- []string{c.urlFilter.GetBaseURL()}
 }
 
 func (c *SimpleCrawler) checkLimit() {
@@ -92,7 +86,7 @@ func (c *SimpleCrawler) getLinks(link string) {
 	if err != nil {
 		log.Printf("err fetch url %s : %s", link, err)
 	} else {
-		c.urlParser.CollectLinks(c.urlParser.ExtractLinks(res))
-		c.linksC <- c.urlCache.FilterLinks(c.urlParser.FilterLinks())
+		c.urlFilter.CollectLinks(c.urlFilter.ExtractLinks(res))
+		c.linksC <- c.urlCache.FilterLinks(c.urlFilter.FilterLinks())
 	}
 }

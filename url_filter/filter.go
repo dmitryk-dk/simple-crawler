@@ -66,6 +66,10 @@ func (f *Filter) FilterLinks() []string {
 	return internalLinks
 }
 
+func (f *Filter) GetBaseURL() string {
+	return f.baseURL.String()
+}
+
 func (f *Filter) hasSubdomains(link *url.URL) bool {
 	return !strings.HasSuffix(link.Host, "."+f.baseURL.String()) || strings.HasSuffix(link.Host, "www."+f.baseURL.String())
 }
