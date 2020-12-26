@@ -7,7 +7,6 @@ import (
 
 	"github.com/dmitryk-dk/simlpe-crawler/crawler"
 	"github.com/dmitryk-dk/simlpe-crawler/fetcher"
-	_ "github.com/dmitryk-dk/simlpe-crawler/fetcher"
 	"github.com/dmitryk-dk/simlpe-crawler/url_cache"
 	"github.com/dmitryk-dk/simlpe-crawler/url_filter"
 )
