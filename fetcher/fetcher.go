@@ -1,7 +1,6 @@
 package fetcher
 
 import (
-	"crypto/tls"
 	"io/ioutil"
 	"net/http"
 	"net/http/cookiejar"
@@ -13,17 +12,13 @@ type Client struct {
 }
 
 func New(timeout time.Duration) *Client {
+	// ignore err because cookiejar.New(nil) return always nil in err
 	cookieJar, _ := cookiejar.New(nil)
 	return &Client{
 		client: &http.Client{
-			Transport: &http.Transport{
-				DisableKeepAlives:     true,
-				TLSClientConfig:       &tls.Config{InsecureSkipVerify: true},
-				TLSNextProto:          make(map[string]func(authority string, c *tls.Conn) http.RoundTripper), // Disable HTTP/2
-				ResponseHeaderTimeout: timeout,
-			},
-			Jar:     cookieJar,
-			Timeout: timeout,
+			Transport: &http.Transport{ResponseHeaderTimeout: timeout},
+			Jar:       cookieJar,
+			Timeout:   timeout,
 		},
 	}
 }
